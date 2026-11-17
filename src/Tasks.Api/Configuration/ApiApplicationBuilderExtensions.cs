@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using FastEndpoints;
 using FastEndpoints.Swagger;
 
@@ -22,6 +23,9 @@ public static class ApiApplicationBuilderExtensions
             config.Versioning.PrependToRoute = true;
             config.Versioning.DefaultVersion = ApiVersions.V1;
             config.Errors.UseProblemDetails();
+
+            // Enums travel as text ("InProgress") in requests and responses.
+            config.Serializer.Options.Converters.Add(new JsonStringEnumConverter());
         });
 
         if (!app.Environment.IsProduction())
