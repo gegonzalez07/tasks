@@ -47,9 +47,9 @@ TOKEN=$(curl -sk https://localhost:7030/api/v1/auth/token \
   -H "Content-Type: application/json" \
   -d '{"userName":"admin","password":"Admin123!"}' | jq -r .accessToken)
 
-# Crear
+# Crear (la fecha límite se valida con el "hoy" de Bogotá)
 curl -sk https://localhost:7030/api/v1/tasks -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
+  -H "Content-Type: application/json" -H "X-Time-Zone: America/Bogota" \
   -d '{"title":"Escribir el README","assignee":"ana","dueDate":"2026-12-01","status":"InProgress"}'
 
 # Listar tareas en curso de "ana", 10 por página
@@ -73,25 +73,29 @@ Reglas de validación de las tareas:
 - `title` (máx. 200), `assignee` (máx. 100) y `dueDate` (`yyyy-MM-dd`) son obligatorios.
 - `description` es opcional (máx. 2000).
 - `status` es opcional al crear (por defecto `Pending`) y obligatorio al editar.
-- Al crear, la fecha límite no puede ser anterior a hoy (UTC).
+- Al crear, la fecha límite no puede ser anterior a hoy.
 - Al editar, una tarea vencida conserva su fecha, pero la fecha no se puede mover al pasado.
+- "Hoy" es la fecha del cliente: se toma de la cabecera opcional `X-Time-Zone` con un id IANA (por ejemplo
+  `America/Bogota`); sin ella se usa UTC. Una zona desconocida devuelve 400.
 
 El listado se ordena por fecha límite (la más próxima primero). Los filtros son opcionales y se combinan;
 `assignee` es una coincidencia exacta que no distingue mayúsculas. `pageSize` va de 1 a 100 (por defecto 10).
 
-Los errores se devuelven como `application/problem+json`. Por ejemplo, un 400:
+Los errores se devuelven como `application/problem+json`. Todos los 400 de validación tienen la misma forma,
+los genere la validación de la petición, el servicio o la cabecera `X-Time-Zone`: `errors` es siempre un
+objeto con el campo (en camelCase) y sus mensajes.
 
 ```json
 {
-  "type": "https://www.rfc-editor.org/rfc/rfc7231#section-6.5.1",
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
   "title": "One or more validation errors occurred.",
   "status": 400,
-  "instance": "/api/v1/tasks",
-  "traceId": "0HN...",
-  "errors": [
-    { "name": "title", "reason": "'Title' must not be empty." },
-    { "name": "dueDate", "reason": "'Due Date' must be today or a later date (UTC)." }
-  ]
+  "instance": "POST /api/v1/tasks",
+  "traceId": "00-4bf92f...-01",
+  "errors": {
+    "title": ["'Title' must not be empty."],
+    "dueDate": ["'Due Date' must be today or a later date in the request time zone (X-Time-Zone header, UTC by default)."]
+  }
 }
 ```
 
@@ -125,10 +129,16 @@ SQLite en memoria.
 - **Regla de la fecha límite.** Una tarea no puede nacer vencida, pero una vencida tiene que poder editarse
   (por ejemplo, para marcarla como hecha), así que al editar solo se rechaza *mover* la fecha al pasado. Esa
   comprobación necesita el valor guardado, por eso vive en el servicio y no en el validador.
+- **"Hoy" es la fecha del cliente, no la del servidor.** Con la fecha UTC, a un usuario en UTC-5 la API le
+  rechazaba desde las 19:00 una tarea con fecha de hoy. La cabecera opcional `X-Time-Zone` indica su zona;
+  la fecha se calcula con `TimeProvider` (para poder probarla) y sin cabecera se usa UTC.
 - **`PUT` con reemplazo completo** en lugar de `PATCH`: más simple de validar y de documentar.
 - **Borrado lógico** (`IsDeleted` + filtro global de EF): una tarea borrada da 404, pero la fila se conserva.
 - **Errores con el código correcto:** 400 validación, 401 sin token, 403 sin rol, 404 no existe (también un id
   que no es GUID), 422 regla de dominio, 500 inesperado sin detalles internos fuera de Development.
+- **Un único formato para los 400** (`HttpValidationProblemDetails`, el estándar de ASP.NET Core), construido
+  en un solo sitio y usado por FastEndpoints, por el manejador global de excepciones y por el middleware de la
+  zona horaria, para que el cliente maneje una sola forma.
 - **Filtro de responsable sin distinguir mayúsculas** con `ToLower()` en las dos partes, para que se comporte
   igual en SQL Server y en SQLite. El coste es que esa comparación no aprovecha el índice de `Assignee`.
 - **Orden determinista** (fecha límite, fecha de creación e id) para que las páginas no se solapen.
@@ -205,6 +215,13 @@ paquetes NuGet desde su entorno, así que **no podía compilar ni ejecutar las p
   PRs van contra `main`.
 - **Finales de línea.** Aparecieron archivos modificados solo por CRLF; se añadió `.gitattributes` y se
   normalizaron los archivos de la migración.
+- **Crear tareas fallaba con 500.** `CreateTaskRequestValidator` tenía dos constructores y FastEndpoints no
+  podía crearlo (`Multiple constructors accepting all given argument types`). Las pruebas fallaban y la IA
+  encontró la causa en los logs. Se dejó un solo constructor y se añadió una prueba que lo comprueba en todos
+  los validadores.
+- **Defectos que la IA encontró al pedirle más mejoras:** dos formatos distintos para el error 400, pruebas que
+  podían fallar si se ejecutaban justo al cambiar el día en UTC, y la regla de "hoy" calculada en UTC en lugar
+  de en la zona del usuario. Le pedí corregirlos en un PR.
 
 En general, la IA aceleró mucho el código repetitivo y la documentación, pero varios errores solo aparecieron al
 ejecutar de verdad. Revisar cada PR y correr las pruebas en mi máquina fue imprescindible.
