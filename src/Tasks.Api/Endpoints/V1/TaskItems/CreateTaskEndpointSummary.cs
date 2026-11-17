@@ -23,7 +23,7 @@ public sealed class CreateTaskEndpointSummary : Summary<CreateTaskEndpoint>
         };
 
         Response<TaskDto>(201, "Task created.");
-        Response<FastEndpoints.ProblemDetails>(400, "Invalid data (missing fields, too long values, unknown status, past due date).");
+        Response<HttpValidationProblemDetails>(400, "Invalid data (missing fields, too long values, unknown status, past due date).");
         Response(401, "Missing or invalid bearer token.");
     }
 }

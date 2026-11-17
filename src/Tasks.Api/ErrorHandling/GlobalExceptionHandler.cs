@@ -31,26 +31,22 @@ internal sealed class GlobalExceptionHandler(
             logger.LogWarning("Request {Method} {Path} failed with {StatusCode}: {Message}", httpContext.Request.Method, httpContext.Request.Path, status, exception.Message);
         }
 
-        var problem = new MvcProblemDetails
-        {
-            Status = status,
-            Title = title,
-            Type = type,
-            Detail = status >= StatusCodes.Status500InternalServerError && !environment.IsDevelopment()
-                ? "An unexpected error occurred. Use the traceId when contacting support."
-                : exception.Message,
-        };
+        // Validation raised by services uses exactly the same shape as FastEndpoints' request validation.
+        MvcProblemDetails problem = exception is ValidationException validationException
+            ? ValidationProblems.Create(validationException.Errors, httpContext, status)
+            : new MvcProblemDetails
+            {
+                Status = status,
+                Title = title,
+                Type = type,
+                Detail = status >= StatusCodes.Status500InternalServerError && !environment.IsDevelopment()
+                    ? "An unexpected error occurred. Use the traceId when contacting support."
+                    : exception.Message,
+            };
 
-        switch (exception)
+        if (exception is DomainException domainException)
         {
-            case DomainException domainException:
-                problem.Extensions["errorCode"] = domainException.ErrorCode;
-                break;
-            case ValidationException validationException:
-                problem.Extensions["errors"] = validationException.Errors
-                    .GroupBy(e => e.PropertyName, StringComparer.Ordinal)
-                    .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray(), StringComparer.Ordinal);
-                break;
+            problem.Extensions["errorCode"] = domainException.ErrorCode;
         }
 
         httpContext.Response.StatusCode = status;

@@ -18,7 +18,7 @@ public sealed class GetUsersEndpointSummary : Summary<GetUsersEndpoint>
         Params[nameof(GetUsersRequest.Search)] = "Optional text contained in the user name or e-mail.";
 
         Response<PagedResponse<UserDto>>(200, "A page of users.");
-        Response<FastEndpoints.ProblemDetails>(400, "Invalid pagination parameters.");
+        Response<HttpValidationProblemDetails>(400, "Invalid pagination parameters.");
         Response(401, "Missing or invalid bearer token.");
         Response(403, "The caller does not have the Admin role.");
     }

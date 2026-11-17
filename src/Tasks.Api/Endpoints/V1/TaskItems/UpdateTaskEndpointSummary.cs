@@ -23,7 +23,7 @@ public sealed class UpdateTaskEndpointSummary : Summary<UpdateTaskEndpoint>
         };
 
         Response<TaskDto>(200, "The updated task.");
-        Response<FastEndpoints.ProblemDetails>(400, "Invalid data, or due date moved into the past.");
+        Response<HttpValidationProblemDetails>(400, "Invalid data, or due date moved into the past.");
         Response(401, "Missing or invalid bearer token.");
         Response<Microsoft.AspNetCore.Mvc.ProblemDetails>(404, "The task does not exist or was deleted.");
     }
