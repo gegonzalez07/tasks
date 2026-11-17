@@ -2,6 +2,7 @@ using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.Extensions.Logging;
 using Tasks.Application.Common.Pagination;
+using Tasks.Application.Common.Time;
 using Tasks.Domain.Exceptions;
 using Tasks.Domain.Repositories;
 using Tasks.Domain.TaskItems;
@@ -12,10 +13,11 @@ namespace Tasks.Application.TaskItems;
 /// Task use cases on top of <see cref="IUnitOfWork"/>. Input shape is validated by the request validators;
 /// this service enforces the rules that need persisted state (existence, due-date change on update).
 /// </summary>
-public sealed class TaskService(IUnitOfWork unitOfWork, TimeProvider clock, ILogger<TaskService> logger) : ITaskService
+public sealed class TaskService(IUnitOfWork unitOfWork, IClientCalendar calendar, ILogger<TaskService> logger) : ITaskService
 {
     public const string ResourceName = "Task";
-    public const string DueDateChangedToPastMessage = "'Due Date' can only be changed to today or a later date (UTC).";
+    public const string DueDateChangedToPastMessage =
+        "'Due Date' can only be changed to today or a later date in the request time zone (X-Time-Zone header, UTC by default).";
 
     private IGenericRepository<TaskItem> Repository => unitOfWork.Repository<TaskItem>();
 
@@ -80,7 +82,7 @@ public sealed class TaskService(IUnitOfWork unitOfWork, TimeProvider clock, ILog
         var dueDate = RequiredDueDate(request.DueDate);
 
         // An overdue task stays editable (e.g. to mark it as done), but its due date cannot be moved into the past.
-        if (dueDate != task.DueDate && dueDate < DateOnly.FromDateTime(clock.GetUtcNow().UtcDateTime))
+        if (dueDate != task.DueDate && dueDate < calendar.Today)
         {
             throw new ValidationException(new[] { new ValidationFailure(nameof(UpdateTaskRequest.DueDate), DueDateChangedToPastMessage) });
         }

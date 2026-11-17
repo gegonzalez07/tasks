@@ -35,8 +35,9 @@ public sealed class ValidatorConventionsTests
     [MemberData(nameof(Validators))]
     public void Validator_CanBeCreatedWithActivatorUtilitiesLikeFastEndpoints(Type validatorType)
     {
+        // Same registrations as the API, so a validator dependency that is not registered also fails here.
         using var provider = new ServiceCollection()
-            .AddSingleton(TimeProvider.System)
+            .AddApplication()
             .BuildServiceProvider();
 
         var factory = ActivatorUtilities.CreateFactory(validatorType, Type.EmptyTypes);
