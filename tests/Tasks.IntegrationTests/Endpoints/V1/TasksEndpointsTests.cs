@@ -16,7 +16,8 @@ namespace Tasks.IntegrationTests.Endpoints.V1;
 public sealed class TasksEndpointsTests(TasksApiFactory factory)
 {
     private const string TasksRoute = "/api/v1/tasks";
-    private static readonly DateOnly Today = DateOnly.FromDateTime(DateTime.UtcNow);
+    // Same "today" the API uses (frozen clock of the factory), so a date change mid-run cannot break the tests.
+    private DateOnly Today => factory.UtcToday;
 
     [Fact]
     public async Task AllTaskEndpoints_WithoutToken_Return401()
@@ -226,7 +227,7 @@ public sealed class TasksEndpointsTests(TasksApiFactory factory)
 
     private static string UniqueAssignee() => $"user-{Guid.NewGuid():N}";
 
-    private static object NewTask(string assignee, string title = "Write the README", string? status = null, int dueInDays = 3) => new
+    private object NewTask(string assignee, string title = "Write the README", string? status = null, int dueInDays = 3) => new
     {
         title,
         description = "How to run it, decisions and AI usage.",
