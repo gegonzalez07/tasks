@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using FastEndpoints;
 using FastEndpoints.Swagger;
 using Tasks.Api.ErrorHandling;
+using Tasks.Api.TimeZones;
 
 namespace Tasks.Api.Configuration;
 
@@ -16,6 +17,9 @@ public static class ApiApplicationBuilderExtensions
     public static WebApplication UseApiEndpoints(this WebApplication app)
     {
         ArgumentNullException.ThrowIfNull(app);
+
+        // After authentication/authorization (so a missing token is still a 401) and before the endpoints.
+        app.UseMiddleware<RequestTimeZoneMiddleware>();
 
         app.UseFastEndpoints(config =>
         {

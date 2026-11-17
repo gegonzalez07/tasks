@@ -10,9 +10,11 @@ public sealed class CreateTaskEndpointSummary : Summary<CreateTaskEndpoint>
     {
         Summary = "Create a task";
         Description =
-            "Creates a task. 'title', 'assignee' and 'dueDate' (yyyy-MM-dd, today or later in UTC) are required; " +
+            "Creates a task. 'title', 'assignee' and 'dueDate' (yyyy-MM-dd, today or later) are required; " +
             "'status' is optional (Pending, InProgress or Done; defaults to Pending). " +
-            "Returns the created task and its URL in the Location header.";
+            "Returns the created task and its URL in the Location header. " +
+            "'Today' is evaluated in the time zone sent in the optional X-Time-Zone header (IANA id such as " +
+            "'America/Bogota'); without it, in UTC. An unknown time zone returns 400.";
         ExampleRequest = new CreateTaskRequest
         {
             Title = "Write the README",

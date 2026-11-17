@@ -11,7 +11,8 @@ public sealed class UpdateTaskEndpointSummary : Summary<UpdateTaskEndpoint>
         Summary = "Update a task";
         Description =
             "Replaces title, description, status, assignee and due date (PUT semantics: send every field). " +
-            "An overdue task can be edited while keeping its due date, but the due date cannot be moved into the past.";
+            "An overdue task can be edited while keeping its due date, but the due date cannot be moved into the past. " +
+            "'Today' is evaluated in the time zone of the optional X-Time-Zone header (IANA id), UTC by default.";
         Params["id"] = "Task id (GUID).";
         ExampleRequest = new UpdateTaskRequest
         {

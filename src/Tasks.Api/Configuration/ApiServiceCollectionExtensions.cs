@@ -2,6 +2,9 @@ using System.Diagnostics;
 using System.Text.Json.Serialization;
 using FastEndpoints;
 using FastEndpoints.Swagger;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Tasks.Api.TimeZones;
+using Tasks.Application.Common.Time;
 using Tasks.Api.ErrorHandling;
 
 namespace Tasks.Api.Configuration;
@@ -14,6 +17,10 @@ public static class ApiServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.AddAuthorization();
+
+        // "Today" for date rules comes from the X-Time-Zone header (UTC when absent).
+        services.AddHttpContextAccessor();
+        services.Replace(ServiceDescriptor.Singleton<IRequestTimeZone, HttpRequestTimeZone>());
 
         // Endpoints live in this assembly; validators live in Application and inherit
         // FluentValidation.AbstractValidator<T>, which FastEndpoints only registers when
