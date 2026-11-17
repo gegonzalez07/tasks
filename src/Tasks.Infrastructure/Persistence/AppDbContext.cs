@@ -2,6 +2,7 @@ using System.Linq.Expressions;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Tasks.Domain.Common;
+using Tasks.Domain.TaskItems;
 using Tasks.Infrastructure.Identity;
 
 namespace Tasks.Infrastructure.Persistence;
@@ -26,6 +27,8 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
     {
         _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
     }
+
+    public DbSet<TaskItem> Tasks => Set<TaskItem>();
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
