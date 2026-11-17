@@ -21,6 +21,16 @@ Guía para Claude Code (y cualquier colaborador) al trabajar en este repositorio
    endpoint real: éxito, validación (400), autenticación/autorización (401/403) y errores de negocio.
 6. `dotnet build` y `dotnet test` en verde antes de dar la tarea por cerrada.
 
+## ⚠️ Flujo de trabajo con Git
+
+- **Nunca se hace commit directamente en `main`.** Cada cambio va en una rama (`feat/...`, `fix/...`,
+  `docs/...`, `chore/...`) creada desde `main` actualizado y se integra con un Pull Request contra `main`.
+- **No encadenar PRs** (un PR cuya base sea otra rama de trabajo): si se fusiona la base primero, el PR
+  dependiente acaba fusionado en esa rama y no en `main`. Esperar a que se fusione el anterior o apuntar a `main`.
+- Commits pequeños con Conventional Commits en español (`feat(app): ...`, `test(api): ...`) y un cuerpo que
+  explique el porqué.
+- Finales de línea normalizados por `.gitattributes`: no commitear cambios que solo sean CRLF/LF.
+
 ## Arquitectura (Clean Architecture)
 
 ```
@@ -66,6 +76,10 @@ Domain y Application nunca referencian Infrastructure ni Api.
 - **Logging**: Serilog configurado en `appsettings*.json` (consola, `logs/tasks-*.json` y `logs/tasks-errors-*.log`
   para Warning+). Usar logging estructurado (`{Placeholder}`), nunca interpolación.
 - **Paquetes**: versiones centralizadas en `Directory.Packages.props` (los `.csproj` no llevan `Version`).
+- **Tareas (`TaskItem`)**: namespace `TaskItems` en todas las capas (no `Tasks`, que choca con el proyecto) y
+  rutas `/api/v1/tasks`. Los enums se serializan como texto. Reglas en dos niveles: validadores (400) y la
+  propia entidad (422); las que dependen del estado guardado (p. ej. mover la fecha límite al pasado) van en
+  `TaskService`. Las fechas "de hoy" se calculan con `TimeProvider`, nunca con `DateTime.Now`.
 
 ## Comandos
 
