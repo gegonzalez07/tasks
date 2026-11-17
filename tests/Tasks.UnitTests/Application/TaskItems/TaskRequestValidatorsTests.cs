@@ -1,4 +1,5 @@
 using Moq;
+using Tasks.Application.Common.Time;
 using Tasks.Application.TaskItems;
 using Tasks.Domain.TaskItems;
 
@@ -13,9 +14,9 @@ public sealed class TaskRequestValidatorsTests
 
     public TaskRequestValidatorsTests()
     {
-        var clock = new Mock<TimeProvider>();
-        clock.Setup(c => c.GetUtcNow()).Returns(new DateTimeOffset(2026, 11, 17, 23, 59, 0, TimeSpan.Zero));
-        _createValidator = new CreateTaskRequestValidator(clock.Object);
+        var calendar = new Mock<IClientCalendar>();
+        calendar.Setup(c => c.Today).Returns(Today);
+        _createValidator = new CreateTaskRequestValidator(calendar.Object);
     }
 
     [Fact]

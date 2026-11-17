@@ -2,6 +2,7 @@ using AutoFixture;
 using AutoFixture.AutoMoq;
 using FluentValidation;
 using Moq;
+using Tasks.Application.Common.Time;
 using Tasks.Application.TaskItems;
 using Tasks.Domain.Exceptions;
 using Tasks.Domain.Repositories;
@@ -21,9 +22,9 @@ public sealed class TaskServiceTests
 
     public TaskServiceTests()
     {
-        var clock = new Mock<TimeProvider>();
-        clock.Setup(c => c.GetUtcNow()).Returns(new DateTimeOffset(2026, 11, 17, 12, 0, 0, TimeSpan.Zero));
-        _fixture.Inject(clock.Object);
+        var calendar = new Mock<IClientCalendar>();
+        calendar.Setup(c => c.Today).Returns(Today);
+        _fixture.Inject(calendar.Object);
 
         _repository = _fixture.Freeze<Mock<IGenericRepository<TaskItem>>>();
         _repository.Setup(r => r.Query(It.IsAny<bool>())).Returns(() => _store.AsQueryable());

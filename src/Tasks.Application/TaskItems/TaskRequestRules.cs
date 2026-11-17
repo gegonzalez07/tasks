@@ -31,6 +31,4 @@ internal static class TaskRequestRules
         validator.RuleFor(dueDate)
             .NotNull();
     }
-
-    public static DateOnly Today(TimeProvider clock) => DateOnly.FromDateTime(clock.GetUtcNow().UtcDateTime);
 }

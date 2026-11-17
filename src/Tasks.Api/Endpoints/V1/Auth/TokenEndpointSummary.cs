@@ -20,7 +20,7 @@ public sealed class TokenEndpointSummary : Summary<TokenEndpoint>
             "Bearer",
             3600,
             new DateTimeOffset(2026, 1, 1, 13, 0, 0, TimeSpan.Zero));
-        Response<FastEndpoints.ProblemDetails>(400, "The request is not valid (missing user name or password).");
+        Response<HttpValidationProblemDetails>(400, "The request is not valid (missing user name or password).");
         Response<Microsoft.AspNetCore.Mvc.ProblemDetails>(401, "Invalid credentials, inactive or locked-out user.");
         Response<Microsoft.AspNetCore.Mvc.ProblemDetails>(500, "Unexpected server error.");
     }

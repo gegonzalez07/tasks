@@ -18,7 +18,7 @@ public sealed class GetTasksEndpointSummary : Summary<GetTasksEndpoint>
         Params[nameof(GetTasksRequest.PageSize)] = $"Items per page, 1-{PagedRequest.MaxPageSize} (default {PagedRequest.DefaultPageSize}).";
 
         Response<PagedResponse<TaskDto>>(200, "A page of tasks.");
-        Response<FastEndpoints.ProblemDetails>(400, "Invalid filter or pagination values.");
+        Response<HttpValidationProblemDetails>(400, "Invalid filter or pagination values.");
         Response(401, "Missing or invalid bearer token.");
     }
 }

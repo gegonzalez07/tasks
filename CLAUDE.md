@@ -72,14 +72,21 @@ Domain y Application nunca referencian Infrastructure ni Api.
   claves de IdentityServer en proceso). Roles en el claim `role`; rol administrador: `AppRoles.Admin` (`Admin`).
 - **Errores**: lanzar excepciones de dominio (`NotFoundException` 404, `ConflictException` 409,
   `BusinessRuleViolationException` 422) o `AuthenticationFailedException` (401); `GlobalExceptionHandler` las
-  traduce a `application/problem+json`. Errores de validación de FastEndpoints también salen como ProblemDetails.
+  traduce a `application/problem+json`. **Todo 400 de validación** usa el mismo formato
+  (`HttpValidationProblemDetails`, `errors: { campo: [mensajes] }`) construido por `ValidationProblems`: lo usan
+  FastEndpoints (`Errors.ResponseBuilder`), el `GlobalExceptionHandler` y el middleware de `X-Time-Zone`. No crear
+  otros formatos de error.
 - **Logging**: Serilog configurado en `appsettings*.json` (consola, `logs/tasks-*.json` y `logs/tasks-errors-*.log`
   para Warning+). Usar logging estructurado (`{Placeholder}`), nunca interpolación.
 - **Paquetes**: versiones centralizadas en `Directory.Packages.props` (los `.csproj` no llevan `Version`).
 - **Tareas (`TaskItem`)**: namespace `TaskItems` en todas las capas (no `Tasks`, que choca con el proyecto) y
   rutas `/api/v1/tasks`. Los enums se serializan como texto. Reglas en dos niveles: validadores (400) y la
   propia entidad (422); las que dependen del estado guardado (p. ej. mover la fecha límite al pasado) van en
-  `TaskService`. Las fechas "de hoy" se calculan con `TimeProvider`, nunca con `DateTime.Now`.
+  `TaskService`. **"Hoy" se obtiene siempre de `IClientCalendar`** (instante de `TimeProvider` + zona de la cabecera
+  `X-Time-Zone`, UTC por defecto), nunca con `DateTime.Now`/`UtcNow`. En las pruebas de integración se usa
+  `factory.UtcToday` / `factory.TodayIn(zona)`, que comparten el reloj congelado de la API.
+- **Validadores**: un solo constructor público (FastEndpoints los crea con `ActivatorUtilities`);
+  `ValidatorConventionsTests` lo comprueba.
 
 ## Comandos
 
