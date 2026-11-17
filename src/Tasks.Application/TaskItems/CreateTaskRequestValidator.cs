@@ -6,11 +6,11 @@ public sealed class CreateTaskRequestValidator : AbstractValidator<CreateTaskReq
 {
     public const string DueDateInPastMessage = "'Due Date' must be today or a later date (UTC).";
 
-    public CreateTaskRequestValidator()
-        : this(TimeProvider.System)
-    {
-    }
-
+    /// <summary>
+    /// Single constructor on purpose: FastEndpoints (and the DI container) build validators with
+    /// ActivatorUtilities, which fails when more than one constructor can be satisfied.
+    /// <see cref="TimeProvider"/> is registered in <c>AddApplication</c>.
+    /// </summary>
     public CreateTaskRequestValidator(TimeProvider clock)
     {
         ArgumentNullException.ThrowIfNull(clock);
