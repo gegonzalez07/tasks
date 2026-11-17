@@ -179,6 +179,13 @@ SQLite en memoria.
 - **Columna normalizada e indexada** para filtrar por responsable sin `ToLower()`.
 - **CI** (GitHub Actions) que ejecute build y pruebas en cada PR, y un `Dockerfile` para la API.
 - **Health checks**, rate limiting y métricas con OpenTelemetry.
+- **Auditoría de quién hizo cada cambio.** Añadiría `CreatedBy` y `UpdatedBy` a las entidades, que se
+  rellenarían desde el token (claim `sub`) en `SaveChangesAsync`, igual que hoy se rellenan `CreatedAt` y
+  `UpdatedAt`.
+- **Secretos fuera de los `appsettings`.** Cadenas de conexión, contraseñas y certificados vendrían de
+  user-secrets en desarrollo y de Azure Key Vault (o variables de entorno) en el resto de entornos, nunca de
+  archivos versionados. Además, una política de CORS explícita con los orígenes permitidos, y Dependabot para
+  mantener actualizadas las dependencias y recibir avisos de vulnerabilidades.
 
 ## Cómo usé la IA
 
