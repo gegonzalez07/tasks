@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.Json.Serialization;
 using FastEndpoints;
 using FastEndpoints.Swagger;
 using Tasks.Api.ErrorHandling;
@@ -31,6 +32,7 @@ public static class ApiServiceCollectionExtensions
                 options.ShortSchemaNames = true;
                 options.EnableJWTBearerAuth = true;
                 options.AutoTagPathSegmentIndex = 0; // tags are declared explicitly per endpoint
+                options.SerializerSettings = serializer => serializer.Converters.Add(new JsonStringEnumConverter());
                 options.DocumentSettings = settings =>
                 {
                     settings.DocumentName = $"v{version}";

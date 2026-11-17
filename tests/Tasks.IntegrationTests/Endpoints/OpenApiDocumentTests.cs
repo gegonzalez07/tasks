@@ -18,5 +18,8 @@ public sealed class OpenApiDocumentTests(TasksApiFactory factory)
         Assert.Contains("/api/v1/auth/token", document, StringComparison.Ordinal);
         Assert.Contains("/api/v1/users", document, StringComparison.Ordinal);
         Assert.Contains("Obtain an access token", document, StringComparison.Ordinal);
+        Assert.Contains("/api/v1/tasks", document, StringComparison.Ordinal);
+        Assert.Contains("/api/v1/tasks/{id}", document, StringComparison.Ordinal);
+        Assert.Contains("Create a task", document, StringComparison.Ordinal);
     }
 }
