@@ -142,6 +142,24 @@ SQLite en memoria.
 
 ## Qué haría con más tiempo
 
+- **POST idempotentes.** Hoy, si un cliente reintenta un `POST /api/v1/tasks` (por un timeout o una red
+  inestable), se crea una tarea duplicada. Exigiría una cabecera `Idempotency-Key`: la primera petición con
+  una clave se procesa y su respuesta se guarda; los reintentos con la misma clave devuelven esa misma
+  respuesta sin crear nada, y la misma clave con un body distinto se rechaza (422). FastEndpoints ya trae
+  soporte de idempotencia sobre OutputCaching; las claves se guardarían en un almacén compartido (Redis o la
+  base de datos) con caducidad.
+- **`<summary>` en cada entidad y en cada campo persistido.** Todas las entidades de la base de datos y sus
+  propiedades llevarían comentarios XML que expliquen qué representan, sus límites y sus reglas. Activaría
+  `GenerateDocumentationFile` con el aviso CS1591 como error en Domain para que no se pueda olvidar, y
+  llevaría esas descripciones a la base de datos con `HasComment` en las configuraciones de EF Core.
+- **Caché donde haga falta.** `GET /api/v1/tasks/{id}` y las primeras páginas del listado son lecturas
+  frecuentes y baratas de cachear. Usaría `HybridCache` (memoria local + Redis) con invalidación por etiquetas
+  en cada `POST`, `PUT` y `DELETE`, y `ETag` para que el cliente pueda hacer peticiones condicionales (304).
+  No cachearía nada que dependa del usuario sin incluirlo en la clave.
+- **Pruebas de integración contra una base de datos de pruebas real.** Hoy usan SQLite en memoria con
+  `EnsureCreated`, que no reproduce todo el comportamiento de SQL Server (intercalación, tipos, transacciones)
+  ni valida las migraciones. Las ejecutaría contra un SQL Server de pruebas levantado con Testcontainers,
+  aplicando las migraciones reales, y limpiaría los datos entre pruebas con Respawn.
 - **Concurrencia optimista** (`rowversion` + `ETag`/`If-Match`) para que dos ediciones simultáneas no se pisen
   (409/412).
 - **`PATCH`** para cambiar solo el estado, y un historial de cambios de estado.
@@ -149,7 +167,6 @@ SQLite en memoria.
 - **Responsable vinculado a usuarios reales**, y que cada usuario vea o edite solo sus tareas (autorización por
   recurso).
 - **Columna normalizada e indexada** para filtrar por responsable sin `ToLower()`.
-- **Pruebas contra SQL Server real** con Testcontainers, porque SQLite no reproduce todas sus diferencias.
 - **CI** (GitHub Actions) que ejecute build y pruebas en cada PR, y un `Dockerfile` para la API.
 - **Health checks**, rate limiting y métricas con OpenTelemetry.
 
