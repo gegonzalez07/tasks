@@ -16,5 +16,6 @@ dotnet ef migrations add InitialCreate \
 dotnet ef database update --project src/Tasks.Infrastructure --startup-project src/Tasks.Api
 ```
 
-While this folder contains no migrations, the startup initializer falls back to `EnsureCreated`
-so the API can run immediately. Generate `InitialCreate` before the first real deployment.
+`InitialCreate` (ASP.NET Core Identity tables + `Tasks`) is already here. The API applies pending migrations
+at startup when `Database:InitializationStrategy` is `Migrate` (the default). The tests use `EnsureCreated` on
+SQLite instead. Add a new migration for every model change.
